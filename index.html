@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API Agent POC</title>
+  <link rel="icon" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/icons/robot.svg" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css" crossorigin="anonymous" />
+  <style>
+    body {
+      background: linear-gradient(120deg, #0d1117, #1e2a38);
+      color: #e6edf3;
+    }
+    .navbar {
+      backdrop-filter: blur(10px);
+      background: rgba(0, 0, 0, 0.6) !important;
+    }
+    .hero {
+      padding: 4rem 1rem;
+      background: linear-gradient(135deg, #0d6efd, #6610f2);
+      color: white;
+      text-align: center;
+      border-radius: 1rem;
+      margin: 2rem 0;
+    }
+    .narrative {
+      max-width: 42rem;
+    }
+    .chat-card {
+      border-radius: 1rem;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+    .chat-card.user { background: #0d6efd; color: white; margin-left: auto; }
+    .chat-card.assistant { background: #343a40; color: #e6edf3; margin-right: auto; }
+    .chat-card.error { background: #dc3545; color: white; }
+    .hljs { padding: 1rem; border-radius: 0.5rem; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    footer { text-align: center; padding: 2rem; opacity: 0.7; }
+  </style>
+</head>
+
+<body>
+  <!-- NAVBAR -->
+  <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold d-flex align-items-center" href="#">
+        <i class="bi bi-robot fs-4 me-2"></i> API Agent POC
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarContent">
+        <div class="ms-auto">
+          <button class="btn btn-outline-light" data-bs-toggle="dropdown">
+            <i class="bi bi-circle-half"></i>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end">
+            <li><button class="dropdown-item" data-bs-theme-value="light"><i class="bi bi-sun-fill me-2"></i>Light</button></li>
+            <li><button class="dropdown-item" data-bs-theme-value="dark"><i class="bi bi-moon-stars-fill me-2"></i>Dark</button></li>
+            <li><button class="dropdown-item" data-bs-theme-value="auto"><i class="bi bi-circle-half me-2"></i>Auto</button></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <div class="container mt-5 pt-5">
+    <div class="hero shadow">
+      <h1 class="display-4 fw-bold">Chat with your APIs</h1>
+      <p class="lead">Browser-based agent that uses LLMs with search, pipelines, and code execution.</p>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="container-fluid">
+    <div class="row">
+      <!-- SIDEBAR -->
+      <aside class="col-lg-4 col-xl-3">
+        <div id="api-sidebar" class="accordion position-sticky top-0 my-3 shadow rounded-3"
+          style="height: calc(100vh - 5rem); overflow-y: auto; background: rgba(255,255,255,0.05); backdrop-filter: blur(12px);">
+        </div>
+      </aside>
+
+      <!-- CONTENT -->
+      <main class="col-lg-8 col-xl-9">
+        <div class="mx-auto my-4 narrative">
+          <h2 class="fw-bold">What is this?</h2>
+          <p>This proof-of-concept shows a minimal LLM agent that can:</p>
+          <ul>
+            <li>⚡ Use Google Search to fetch live snippets</li>
+            <li>🔗 Call AI Pipe proxy APIs</li>
+            <li>🧑‍💻 Execute sandboxed JavaScript code</li>
+            <li>🤖 Loop with LLM reasoning until task completion</li>
+          </ul>
+        </div>
+
+        <!-- SETTINGS -->
+        <form id="task-form" class="narrative mx-auto">
+          <div class="my-4 p-4 card rounded-3 shadow-sm bg-dark text-light">
+            <h3 class="mb-3"><i class="bi bi-gear me-2"></i>Advanced Settings</h3>
+            <div class="accordion my-3" id="advancedSettings">
+              <!-- API Key -->
+              <div class="accordion-item bg-dark text-light">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#apiKeyCollapse">
+                    <i class="bi bi-key me-2"></i> API Key
+                  </button>
+                </h2>
+                <div id="apiKeyCollapse" class="accordion-collapse collapse">
+                  <div class="accordion-body">
+                    <input type="password" class="form-control" id="apiKeyInput" placeholder="sk-...">
+                  </div>
+                </div>
+              </div>
+              <!-- Base URL -->
+              <div class="accordion-item bg-dark text-light">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#baseUrlCollapse">
+                    <i class="bi bi-link-45deg me-2"></i> Base URL
+                  </button>
+                </h2>
+                <div id="baseUrlCollapse" class="accordion-collapse collapse">
+                  <div class="accordion-body">
+                    <input type="text" class="form-control" id="baseUrlInput" value="https://api.openai.com/v1">
+                  </div>
+                </div>
+              </div>
+              <!-- Model & Prompt -->
+              <div class="accordion-item bg-dark text-light">
+                <h2 class="accordion-header">
+                  <button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#systemPromptCollapse">
+                    <i class="bi bi-cpu me-2"></i> Model & Prompt
+                  </button>
+                </h2>
+                <div id="systemPromptCollapse" class="accordion-collapse collapse">
+                  <div class="accordion-body">
+                    <textarea class="form-control mb-3" id="system-prompt" rows="4"></textarea>
+                    <input type="text" class="form-control mb-3" id="model" value="gpt-4.1-nano">
+                    <input type="number" class="form-control" id="attempts" value="3">
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- SAMPLE QUESTIONS -->
+          <h5 class="my-4">Sample Questions</h5>
+          <div id="example-questions" class="list-group my-3"></div>
+
+          <!-- RESULTS -->
+          <div id="results" class="mx-auto my-3 narrative"></div>
+          <div id="status" class="alert alert-info mx-auto my-3 narrative d-none"></div>
+
+          <!-- INPUT -->
+          <label for="question" class="form-label">Ask your question:</label>
+          <textarea class="form-control" id="question" rows="3" placeholder="e.g. Search for IBM and summarize."></textarea>
+          <button type="submit" class="btn btn-primary mt-3"><i class="bi bi-send me-2"></i>Submit</button>
+        </form>
+      </main>
+    </div>
+  </div>
+
+  <footer>⚡ Built for rapid multi-tool API experimentation</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" type="module"></script>
+  <script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/common.min.js"></script>
+  <script src="script.js" type="module"></script>
+</body>
+</html>
